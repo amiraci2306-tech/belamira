@@ -44,6 +44,8 @@ function Admin() {
   const cloudLoaded = useStore(s => s.cloudLoaded);
   const [allowed, setAllowed] = useState<boolean | undefined>(undefined);
   const [tab, setTab] = useState<Tab>("produtos");
+  const [productSearch, setProductSearch] = useState("");
+  const [productAvailability, setProductAvailability] = useState<"todas" | Product["availability"]>("todas");
   const [draft, setDraft] = useState<Product | null>(null);
   const [priceInput, setPriceInput] = useState("");
   const [metrics, setMetrics] = useState<Metrics>(emptyMetrics);
@@ -187,6 +189,17 @@ function Admin() {
     setBusy(false);
   }
 
+  const normalizedSearch = productSearch.trim().toLocaleLowerCase("pt-BR");
+  const visibleProducts = products.filter(p =>
+    (productAvailability === "todas" || p.availability === productAvailability) &&
+    (!normalizedSearch || [p.name, p.brand || "", p.size, p.category, p.description]
+      .some(value => value.toLocaleLowerCase("pt-BR").includes(normalizedSearch)))
+  );
+  const productCounts = {
+    disponivel: products.filter(p => p.availability === "disponivel").length,
+    reservada: products.filter(p => p.availability === "reservada").length,
+    vendida: products.filter(p => p.availability === "vendida").length,
+  };
   if (loading || allowed===undefined && Boolean(user)) return <Layout><p className="p-12 text-center">Verificando acesso...</p></Layout>;
   if(!cloud) return <Layout><PageTitle eyebrow="Administração" title="Configuração necessária" /><p className="mx-auto max-w-xl px-5 text-center">O painel exige banco e login seguros. Configure o Supabase e execute a migração documentada no README do GitHub. Não há senha de administradora pré-definida.</p></Layout>;
   if(!user) return <Layout><PageTitle title="Área administrativa" /><p className="text-center"><Link to="/entrar" className="btn btn-primary">Entrar com minha conta</Link></p></Layout>;
@@ -210,9 +223,34 @@ function Admin() {
               <button type="button" className="btn btn-primary" onClick={newPiece}>Adicionar produto</button>
             </div>
           </div>
+          <div className="mb-6 grid gap-3 md:grid-cols-[1fr_220px]">
+            <label className="text-sm">Buscar peças
+              <input className="field mt-1" value={productSearch} onChange={e=>setProductSearch(e.target.value)}
+                placeholder="Nome, marca, tamanho ou categoria" type="search" />
+            </label>
+            <label className="text-sm">Disponibilidade
+              <select className="field mt-1" value={productAvailability}
+                onChange={e=>setProductAvailability(e.target.value as typeof productAvailability)}>
+                <option value="todas">Todas as peças</option>
+                <option value="disponivel">Disponíveis ({productCounts.disponivel})</option>
+                <option value="reservada">Reservadas ({productCounts.reservada})</option>
+                <option value="vendida">Vendidas ({productCounts.vendida})</option>
+              </select>
+            </label>
+          </div>
+          <p className="mb-4 text-sm text-muted-foreground" role="status">
+            Exibindo {visibleProducts.length} de {products.length} peças.
+            {productCounts.disponivel} disponíveis, {productCounts.reservada} reservadas e {productCounts.vendida} vendidas.
+          </p>
+          {visibleProducts.length === 0 && <p className="rounded-xl bg-secondary p-4 text-sm">
+            Nenhum produto corresponde aos filtros selecionados.
+          </p>}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map(p=><article key={p.id} className="rounded-2xl bg-card p-4 shadow-soft">
+            {visibleProducts.map(p=><article key={p.id} className="rounded-2xl bg-card p-4 shadow-soft">
               <div className="aspect-[4/3] overflow-hidden rounded-xl"><Photo src={p.images.main} alt={p.name} tone={p.color}/></div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {(["main","front","back","detail"] as const).filter(slot=>Boolean(p.images[slot])).length} de 4 fotos cadastradas
+              </p>
               <h2 className="mt-3 text-2xl">{p.name}</h2>
               <p className="text-sm">Tam. {p.size} · {formatBRL(p.price)} · {p.availability}</p>
               <button type="button" className="btn btn-outline mt-3" onClick={()=>void editPiece(p)}>Editar peça e fotos</button>
