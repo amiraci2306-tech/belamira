@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Logo } from "./Logo";
 import { useStore } from "@/lib/store";
@@ -25,6 +25,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="justify-self-center"><Logo /></div>
           <div className="flex items-center gap-6 justify-self-end">
             <nav className="hidden gap-6 md:flex">{NAV.slice(2).map((n) => <Link key={n.to} to={n.to} className="eyebrow hover:text-accent" activeProps={{ className: "text-accent" }}>{n.label}</Link>)}</nav>
+            <Link to="/minha-conta" aria-label="Minha conta" title="Minha conta"><UserRound size={20} strokeWidth={1.4} /></Link>
             <Link to="/carrinho" className="relative" aria-label={`Sacola, ${cart.length} itens`}>
               <ShoppingBag size={20} strokeWidth={1.4} />
               {cart.length > 0 && <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[0.6rem] text-accent-foreground">{cart.length}</span>}
@@ -47,6 +48,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <Link to="/regras" className="hover:text-accent">Regras e direitos</Link>
             <Link to="/moda-circular" className="hover:text-accent">Sobre moda circular</Link>
             <Link to="/contato" className="hover:text-accent">Contato pelo Direct</Link>
+            <Link to="/minha-conta" className="hover:text-accent">Minha conta</Link>
           </div>
           <div className="flex flex-col gap-2 text-sm">
             <span className="eyebrow mb-2 text-accent">Legal</span>
