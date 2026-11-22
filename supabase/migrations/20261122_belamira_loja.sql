@@ -14,7 +14,7 @@ as $$
     where user_id = p_user_id and role = 'admin'), false);
 $$;
 revoke all on function public.is_admin(uuid) from public;
-grant execute on function public.is_admin(uuid) to authenticated;
+grant execute on function public.is_admin(uuid) to anon, authenticated;
 
 create table if not exists public.profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
